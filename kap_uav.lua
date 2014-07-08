@@ -6,7 +6,7 @@
 
 @title KAP UAV 3.1
 @param     i Shot Interval (sec)
-  @default i 15
+  @default i 2
   @range   i 2 120
 @param     s Total Shots (0=infinite)
   @default s 0
@@ -21,25 +21,25 @@
   @default d 0
   @range   d 0 10000
 @param     y Tv Min (sec)
-  @default y 0
+  @default y 5
   @values  y None 1/60 1/100 1/200 1/400 1/640
 @param     t Target Tv (sec)
-  @default t 5
+  @default t 7
   @values  t 1/100 1/200 1/400 1/640 1/800 1/1000 1/1250 1/1600 1/2000
 @param     x Tv Max (sec)
-  @default x 3
-  @values  x 1/1000 1/1250 1/1600 1/2000 1/5000 1/10000
+  @default x 4
+  @values  x 1/1000 1/1250 1/1600 1/2000 1/3200 1/5000 1/10000
 @param     f Av Low(f-stop)
-  @default f 4
+  @default f 6
   @values  f 1.8 2.0 2.2 2.6 2.8 3.2 3.5 4.0 4.5 5.0 5.6 6.3 7.1 8.0
 @param     a Av Target (f-stop)
-  @default a 7
+  @default a 6
   @values  a 1.8 2.0 2.2 2.6 2.8 3.2 3.5 4.0 4.5 5.0 5.6 6.3 7.1 8.0
 @param     m Av Max (f-stop)
-  @default m 13
+  @default m 11
   @values  m 1.8 2.0 2.2 2.6 2.8 3.2 3.5 4.0 4.5 5.0 5.6 6.3 7.1 8.0
 @param     p ISO Min
-  @default p 1
+  @default p 0
   @values  p 80 100 200 400 800 1250 1600
 @param     q ISO Max1
   @default q 2
@@ -48,13 +48,13 @@
   @default r 3
   @values  r 100 200 400 800 1250 1600
 @param     n Allow use of ND filter?
-  @default n 1
+  @default n 0
   @values  n No Yes
 @param     z Zoom position
   @default z 0
   @values  z Off 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
 @param     c Focus @ Infinity Mode
-  @default c 0
+  @default c 2
   @values  c None @Shot AFL MF
 @param     v Video Interleave (shots)
   @default v 0
@@ -63,10 +63,13 @@
   @default w 10
   @range   w 5 300
 @param     u USB Shot Control?
-  @default u 0
+  @default u 2
   @values  u None On/Off OneShot PWM
+@param	   g GPS On
+  @default g 1
+  @range   g 0 1
 @param     b Backlight Off?
-  @default b 0
+  @default b 1
   @range   b 0 1
 @param     l Logging
   @default l 3
@@ -77,7 +80,7 @@
     capmode=require("capmode")
 
 -- convert user parameter to usable variable names and values
-    tv_table       = { -320, 576, 640, 736, 832, 896, 928, 960, 992, 1024, 1056, 1180, 1276}
+    tv_table       = { -320, 576, 640, 736, 832, 896, 928, 960, 992, 1024, 1056, 1113, 1180, 1276}
     tv96target     = tv_table[t+3]
     tv96max        = tv_table[x+8]
     tv96min        = tv_table[y+1]
@@ -101,6 +104,7 @@
     log_mode=        l
     focus_mode =     c
     usb_mode =       u
+	gps = 			 g
     if ( z==0 ) then zoom_setpoint = nil else zoom_setpoint = (z-1)*10 end
 
 -- initial configuration values
@@ -515,6 +519,13 @@ else
         printf("entering start delay of ".. start_delay.." seconds")
         sleep( start_delay*1000 )
     end
+	
+	if (gps==1) then
+		set_config_value(282,1) --turn GPS on
+		--set_config_value(278,1) --show GPS symbol
+		set_config_value(261,1) --wait for signal time
+		set_config_value(266,5) --battery shutdown percentage
+	end
 
     -- enable USB remote in USB remote moded
     if (usb_mode > 0 ) then
@@ -522,7 +533,8 @@ else
         if (get_usb_power(1) == 0) then        -- can we start ?
             printf("waiting on USB signal")
             repeat wait_click(20) until ((get_usb_power(1) == 1) or ( is_key("menu")))
-        else  sleep(1000) end
+			--changed sleep from 1000 to 500
+        else  sleep(500) end
         printf("USB signal received")
     end
 
@@ -544,9 +556,9 @@ else
     if( get_video_button() == 1) then video_button = true else video_button = false end
     set_console_layout(2 ,0, 45, 4 )
     repeat
-
+		--BB: Set get_usb_power(2) > 7 for a 70/100s pulse
         if(    ( (usb_mode < 2 )  and ( next_shot_time <= get_tick_count() ) )
-            or ( (usb_mode == 2 ) and (get_usb_power(2) > 0 ) )
+            or ( (usb_mode == 2 ) and (get_usb_power(2) > 7 ) )
             or ( (usb_mode == 3 ) and (shot_request == true ) ) ) then
 
             -- time to insert a video sequence ?
