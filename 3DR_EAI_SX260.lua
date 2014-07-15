@@ -3,6 +3,13 @@
   KAP UAV Exposure Control Script v3.1
   -- Released under GPL by waterwingz and wayback/peabody
   http://chdk.wikia.com/wiki/KAP_%26_UAV_Exposure_Control_Script
+  
+  3DR EAI 1.0 is a fork of KAP 3.1 with settings specific to Canon cameras triggered off the Pixhawk autopilot.
+  Changelog:
+  -Modified Tv, Av, and ISO settings for the Canon SX260
+  -Added an option to turn the GPS on and off
+  -Added control of GPS settings in Main Loop
+  -Changed USB OneShot mode to listen for 100ms command pulse from Pixhawk
 
 @title KAP UAV 3.1
 @param     i Shot Interval (sec)
@@ -24,7 +31,7 @@
   @default y 5
   @values  y None 1/60 1/100 1/200 1/400 1/640
 @param     t Target Tv (sec)
-  @default t 7
+  @default t 6
   @values  t 1/100 1/200 1/400 1/640 1/800 1/1000 1/1250 1/1600 1/2000
 @param     x Tv Max (sec)
   @default x 4
@@ -33,10 +40,10 @@
   @default f 6
   @values  f 1.8 2.0 2.2 2.6 2.8 3.2 3.5 4.0 4.5 5.0 5.6 6.3 7.1 8.0
 @param     a Av Target (f-stop)
-  @default a 6
+  @default a 7
   @values  a 1.8 2.0 2.2 2.6 2.8 3.2 3.5 4.0 4.5 5.0 5.6 6.3 7.1 8.0
 @param     m Av Max (f-stop)
-  @default m 11
+  @default m 13
   @values  m 1.8 2.0 2.2 2.6 2.8 3.2 3.5 4.0 4.5 5.0 5.6 6.3 7.1 8.0
 @param     p ISO Min
   @default p 0
@@ -45,7 +52,7 @@
   @default q 2
   @values  q 100 200 400 800 1250 1600
 @param     r ISO Max2
-  @default r 3
+  @default r 5
   @values  r 100 200 400 800 1250 1600
 @param     n Allow use of ND filter?
   @default n 0
@@ -491,7 +498,10 @@ end
 
 set_console_layout(1 ,1, 45, 14 )
 
-printf("KAP 3.1 started - press MENU to exit")
+--printf("KAP 3.1 started - press MENU to exit")
+printf("3DR EAI 1.0 Canon SX260 - Lets Map!")
+printf("Based On KAP 3.1")
+printf("Press the shutter button to pause")
 bi=get_buildinfo()
 printf("%s %s-%s %s %s %s", bi.version, bi.build_number, bi.build_revision, bi.platform, bi.platsub, bi.build_date)
 chdk_version= tonumber(string.sub(bi.build_number,1,1))*100 + tonumber(string.sub(bi.build_number,3,3))*10 + tonumber(string.sub(bi.build_number,5,5))
@@ -521,10 +531,10 @@ else
     end
 	
 	if (gps==1) then
-		set_config_value(282,1) --turn GPS on
-		--set_config_value(278,1) --show GPS symbol
-		set_config_value(261,1) --wait for signal time
-		set_config_value(266,5) --battery shutdown percentage
+		set_config_value(282,1) 	--turn GPS on
+		--set_config_value(278,1) 	--show GPS symbol
+		set_config_value(261,1) 	--wait for signal time
+		set_config_value(266,5) 	--battery shutdown percentage
 	end
 
     -- enable USB remote in USB remote moded
@@ -557,6 +567,8 @@ else
     set_console_layout(2 ,0, 45, 4 )
     repeat
 		--BB: Set get_usb_power(2) > 7 for a 70/100s pulse
+		--BB: Could consider a max threshold to prevent erroneous trigger events 
+		--eg. get_usb_power(2) > 7 && get_usb_power(2) < 13
         if(    ( (usb_mode < 2 )  and ( next_shot_time <= get_tick_count() ) )
             or ( (usb_mode == 2 ) and (get_usb_power(2) > 7 ) )
             or ( (usb_mode == 3 ) and (shot_request == true ) ) ) then
