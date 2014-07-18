@@ -1,3 +1,4 @@
+
 --[[
 
   KAP UAV Exposure Control Script v3.1
@@ -11,7 +12,7 @@
   -Added control of GPS settings in Main Loop
   -Changed USB OneShot mode to listen for 100ms command pulse from Pixhawk
 
-@title KAP UAV 3.1
+@title 3DR EAI 1.0 - Lets Map!
 @param     i Shot Interval (sec)
   @default i 2
   @range   i 2 120
@@ -61,7 +62,7 @@
   @default z 0
   @values  z Off 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
 @param     c Focus @ Infinity Mode
-  @default c 2
+  @default c 3
   @values  c None @Shot AFL MF
 @param     v Video Interleave (shots)
   @default v 0
@@ -138,7 +139,7 @@ function printf(...)
     local str=string.format(...)
     if (( log_mode == 1) or (log_mode == 3)) then print(str) end
     if ( log_mode > 1 ) then
-    local logname="A/KAP.log"
+    local logname="A/3DR_EAI_log.log"
         log=io.open(logname,"a")
         log:write(os.date("%Y%b%d %X ")..string.format(...),"\n")
         log:close()
@@ -530,6 +531,9 @@ else
         sleep( start_delay*1000 )
     end
 	
+	-- CAMERA CONFIGURATION - 
+	-- FIND config table here http://subversion.assembla.com/svn/chdk/trunk/core/conf.c
+	set_config_value(2,0)			--Save raw: off
 	if (gps==1) then
 		set_config_value(282,1) 	--turn GPS on
 		--set_config_value(278,1) 	--show GPS symbol
