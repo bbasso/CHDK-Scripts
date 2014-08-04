@@ -70,9 +70,9 @@
 @param     w Video Duration (sec)
   @default w 10
   @range   w 5 300
-@param     u USB Shot Control?
+@param     u Trigger Type
   @default u 2
-  @values  u None On/Off OneShot PWM
+  @values  u Interval Cont. USB PWM
 @param	   g GPS On
   @default g 1
   @range   g 0 1
